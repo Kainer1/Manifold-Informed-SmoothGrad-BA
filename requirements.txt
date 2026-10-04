@@ -1,0 +1,28 @@
+# Versions from the local Python 3.12.3 environment
+
+torch==2.12.0
+torchvision==0.27.0
+diffusers==0.37.1
+transformers==5.8.0
+accelerate==1.13.0
+sentencepiece==0.2.1
+protobuf==7.34.1
+
+numpy==2.4.4
+scipy==1.17.1
+h5py==3.16.0
+pandas==3.0.2
+openpyxl==3.1.5
+
+matplotlib==3.10.8
+Pillow==12.2.0
+cmcrameri==1.9
+torchmetrics==1.9.0
+lpips==0.1.4
+
+# Quantus revision used by the project
+quantus @ git+https://github.com/understandable-machine-intelligence-lab/Quantus.git@3c01edfbf8c6152f77e11a22bd8a8dcb24cc5919
+
+# Required for ADM
+blobfile==3.2.0
+-e git+https://github.com/openai/guided-diffusion.git@22e0df8183507e13a7813f8d38d51b072ca1e67c#egg=guided-diffusion

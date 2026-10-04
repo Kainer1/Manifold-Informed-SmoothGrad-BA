@@ -1,0 +1,133 @@
+[
+  {
+    "sampler_name": "VanillaGradient",
+    "group_name": "example",
+    "n_samples": 1,
+    "indices": [0, 1],
+    "config": {},
+    "flags": {
+      "saveAllSamples": true,
+      "SampleVisualizationIndices": [0, 1],
+      "SafeHeatmapPNG": true,
+      "SafeHeatmapIndices": [0, 1]
+    }
+  },
+  {
+    "sampler_name": "SmoothGrad",
+    "group_name": "example",
+    "n_samples": 4,
+    "indices": [0, 1],
+    "config": {"p": 0.09},
+    "flags": {
+      "saveAllSamples": true,
+      "SampleVisualizationIndices": [0, 1],
+      "SafeHeatmapPNG": true,
+      "SafeHeatmapIndices": [0, 1]
+    }
+  },
+  {
+    "sampler_name": "LG-SmoothGrad",
+    "group_name": "example",
+    "n_samples": 4,
+    "indices": [0, 1],
+    "config": {"p": 0.09, "q": 0.8, "CircleMask": "out"},
+    "flags": {
+      "saveAllSamples": true,
+      "SampleVisualizationIndices": [0, 1],
+      "SafeHeatmapPNG": true,
+      "SafeHeatmapIndices": [0, 1]
+    }
+  },
+  {
+    "sampler_name": "VAE_SD2",
+    "group_name": "example",
+    "n_samples": 4,
+    "indices": [0, 1],
+    "config": {"p": 0.05},
+    "flags": {
+      "saveAllSamples": true,
+      "SampleVisualizationIndices": [0, 1],
+      "SafeHeatmapPNG": true,
+      "SafeHeatmapIndices": [0, 1]
+    }
+  },
+  {
+    "sampler_name": "VAE_REPAE_ImageNet",
+    "group_name": "example",
+    "n_samples": 4,
+    "indices": [0, 1],
+    "config": {"p": 0.05},
+    "flags": {
+      "saveAllSamples": true,
+      "SampleVisualizationIndices": [0, 1],
+      "SafeHeatmapPNG": true,
+      "SafeHeatmapIndices": [0, 1]
+    }
+  },
+  {
+    "sampler_name": "DiT",
+    "group_name": "example",
+    "n_samples": 4,
+    "indices": [0, 1],
+    "config": {
+      "strength": 0.16,
+      "actual_steps": 5,
+      "class_conditioning": true
+    },
+    "flags": {
+      "saveAllSamples": true,
+      "SampleVisualizationIndices": [0, 1],
+      "SafeHeatmapPNG": true,
+      "SafeHeatmapIndices": [0, 1]
+    }
+  },
+  {
+    "sampler_name": "SD2",
+    "group_name": "example",
+    "n_samples": 4,
+    "indices": [0, 1],
+    "config": {
+      "strength": 0.16,
+      "actual_steps": 5,
+      "class_conditioning": false
+    },
+    "flags": {
+      "saveAllSamples": true,
+      "SampleVisualizationIndices": [0, 1],
+      "SafeHeatmapPNG": true,
+      "SafeHeatmapIndices": [0, 1]
+    }
+  },
+  {
+    "sampler_name": "DeepFloyd",
+    "group_name": "example",
+    "n_samples": 4,
+    "indices": [0, 1],
+    "config": {
+      "strength": 0.2,
+      "actual_steps": 5,
+      "strength_2": 0.1,
+      "actual_steps_2": 5,
+      "class_conditioning": true
+    },
+    "flags": {
+      "saveAllSamples": true,
+      "SampleVisualizationIndices": [0, 1],
+      "SafeHeatmapPNG": true,
+      "SafeHeatmapIndices": [0, 1]
+    }
+  },
+  {
+    "sampler_name": "ADM",
+    "group_name": "example",
+    "n_samples": 4,
+    "indices": [0, 1],
+    "config": {"strength": 0.08},
+    "flags": {
+      "saveAllSamples": true,
+      "SampleVisualizationIndices": [0, 1],
+      "SafeHeatmapPNG": true,
+      "SafeHeatmapIndices": [0, 1]
+    }
+  }
+]
