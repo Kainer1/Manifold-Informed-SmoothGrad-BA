@@ -148,16 +148,20 @@ def analyze(args):
                     raise ValueError(
                         f"Reference needs one sample and the same label at {index}."
                     )
-                _, original_power = radial_spectra(original[:], valid, bin_ids, counts)
-                if not np.all(original_power > 0):
-                    raise ValueError(f"Zero reference power at image index {index}.")
+                original_amplitude, _ = radial_spectra(
+                    original[:], valid, bin_ids, counts
+                )
+                if not np.all(original_amplitude > 0):
+                    raise ValueError(
+                        f"Zero reference amplitude at image index {index}."
+                    )
             for start in range(first, stop, args.batch_size):
                 batch = samples[start : min(start + args.batch_size, stop)]
                 amplitude, power = radial_spectra(batch, valid, bin_ids, counts)
                 amplitude_batches.append(amplitude)
                 power_batches.append(power / counts)
                 if reference is not None:
-                    relative_batches.append(100 * (power / original_power - 1))
+                    relative_batches.append(100 * (amplitude / original_amplitude - 1))
             coverage.append((index, label, stop - first, first, stop - 1))
             print(f"Processed image {index}: {stop - first} samples", flush=True)
         source_path = source.filename
@@ -168,7 +172,7 @@ def analyze(args):
         "Power": np.concatenate(power_batches),
     }
     if relative_batches:
-        metrics["RelativePowerPercent"] = np.concatenate(relative_batches)
+        metrics["RelativeAmplitudePercent"] = np.concatenate(relative_batches)
     sample_count = len(metrics["Power"])
     workbook = Workbook()
     summary = workbook.active
@@ -224,15 +228,15 @@ def analyze(args):
         ),
         (
             "Amplitude",
-            "Mean absolute Fourier magnitude per coefficient in each radial ring. Matches the single-sample BA analysis.",
+            "Mean absolute Fourier magnitude per coefficient in each radial ring. Matches both the single-sample and appendix BA analyses.",
         ),
         (
             "Power",
-            "Mean squared Fourier magnitude per coefficient in each radial ring. Matches the appendix BA analysis.",
+            "Mean squared Fourier magnitude per coefficient in each radial ring. Auxiliary output; not used in the appendix amplitude comparison.",
         ),
         (
-            "RelativePowerPercent",
-            "If a reference is supplied: 100 * (sample ring power / corresponding image reference ring power - 1).",
+            "RelativeAmplitudePercent",
+            "If a reference is supplied: 100 * (sample mean ring amplitude / corresponding original image mean ring amplitude - 1). Compute each sample's percentage before aggregation.",
         ),
         (
             "Aggregation",

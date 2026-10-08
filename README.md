@@ -72,7 +72,7 @@ The sample-based scripts below read `Samples/allSamples/`, created by enabling `
 | `averagedHeatmapCoarse.py` | Coarse 8/16/32/64 of the saved averaged attribution heatmaps, as in Fig. C.1; scores per image and means across images |
 | `reluActiveAnalysis.py` | Counts and fractions of active ReLU units per layer and across the network |
 | `reluGradientAmounts.py` | Incoming and passed absolute-gradient amounts at ReLU layers, blocked fractions and input-gradient amounts |
-| `sampleFourierAnalysis.py` | Radial Fourier amplitude and power; means and quantiles for one sample or all samples of a sampler |
+| `sampleFourierAnalysis.py` | Radial Fourier amplitudes and relative amplitude changes against an original-image reference; means and quantiles, with power as auxiliary output |
 | `sampleSRG.py` | SRG for every individual sample gradient, evaluated at its original image as in the old `n_samples=1` runs; CSV in `Stats/SampleSRG/` |
 
 After running the example configuration, use these commands from `Code/`. For other configurations, replace the sampler names with their saved filenames without `samples_` and `.h5`.
@@ -84,11 +84,12 @@ python PostProcessing/reluActiveAnalysis.py
 python PostProcessing/reluGradientAmounts.py --samplers example_VanillaGradient_n1 example_ADM_n4_strength0.08 example_SmoothGrad_n4_p0.09
 python PostProcessing/sampleFourierAnalysis.py --sampler example_SmoothGrad_n4_p0.09
 python PostProcessing/sampleFourierAnalysis.py --sampler example_SmoothGrad_n4_p0.09 --index 0 --sample-index 0
+python PostProcessing/sampleFourierAnalysis.py --sampler example_SmoothGrad_n4_p0.09 --reference-sampler example_VanillaGradient_n1
 python PostProcessing/sampleSRG.py --samplers example_SmoothGrad_n4_p0.09 example_ADM_n4_strength0.08
 python PostProcessing/averagedHeatmapCoarse.py --samplers example_VanillaGradient_n1 example_SmoothGrad_n4_p0.09 example_ADM_n4_strength0.08
 ```
 
-The ReLU-gradient analysis uses every saved sample of each selected image; sample counts may differ between samplers and images. Fourier analysis defaults to quantiles 0.1 and 0.9; change them with `--quantiles`.
+The ReLU-gradient analysis uses every saved sample of each selected image; sample counts may differ between samplers and images. Fourier analysis defaults to quantiles 0.1 and 0.9; change them with `--quantiles`. With `--reference-sampler`, it exports `RelativeAmplitudePercentMean` and percentile columns as in the thesis appendix: average Fourier magnitudes within each radial bin, calculate `100 * (sample amplitude / matching original-image amplitude - 1)` for each sample, then aggregate these percentages. The reference must contain one original image per matching index.
 
 Sample SRG uses all complete stored indices and all their samples; optionally select image indices with `--indices 0 1`. It uses `IMAGENET_H5_PATH` from `run.py` for the matching original images and writes `Samplername`, `Gruppenname`, `Index`, `SampleIndex`, `Label` and `SRG` to `Stats/SampleSRG/samples_<sampler>.csv`.
 
