@@ -3,6 +3,7 @@
 
 Retains the calculation from BA-Code-Final/tests/test_vgg16_crop_accuracy.py.
 The default dataset is IMAGENET_H5_PATH from run.py.
+Classifier inference uses CUDA autocast; CPU inference uses float32.
 """
 
 import argparse
@@ -64,7 +65,9 @@ def evaluate_vgg16_accuracy(
     top5_224 = 0
 
     print(f"\nEvaluating {total_samples} samples (batch size {batch_size})...")
-    with torch.no_grad():
+    with torch.no_grad(), torch.amp.autocast(
+        "cuda", enabled=torch.device(device).type == "cuda"
+    ):
         for start_idx in range(0, total_samples, batch_size):
             end_idx = min(start_idx + batch_size, total_samples)
             x_batch = inputs_tensor[start_idx:end_idx]

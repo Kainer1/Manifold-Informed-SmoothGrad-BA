@@ -7,7 +7,6 @@ from pathlib import Path
 import h5py
 import numpy as np
 import torch
-import torch.nn.functional as F
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
 from scipy.fft import dctn
@@ -24,7 +23,6 @@ from Helper.paths import RESULTS_ROOT  # noqa: E402
 
 PAIRWISE_METRICS = (
     ("cosine", "Cosine"),
-    ("gaussian_cosine", "Gaussian Cosine"),
     ("relative_l1", "Relative L1 Difference"),
     ("spearman", "Spearman"),
 )
@@ -77,15 +75,6 @@ def compute_l2_pooled_attributions(
     return torch.cat(pooled_batches, dim=0)
 
 
-def _gaussian_blur_3x3(heatmaps: torch.Tensor) -> torch.Tensor:
-    coordinates = torch.arange(-1, 2, device=heatmaps.device, dtype=heatmaps.dtype)
-    kernel_1d = torch.exp(-(coordinates.square()) / 2.0)
-    kernel_1d /= kernel_1d.sum()
-    kernel = torch.outer(kernel_1d, kernel_1d).reshape(1, 1, 3, 3)
-    padded = F.pad(heatmaps[:, None], (1, 1, 1, 1), mode="reflect")
-    return F.conv2d(padded, kernel)[:, 0]
-
-
 def _pairwise_cosine(flattened: torch.Tensor) -> np.ndarray:
     norms = torch.linalg.vector_norm(flattened, ord=2, dim=1)
     valid_rows = norms > torch.finfo(flattened.dtype).eps
@@ -131,7 +120,7 @@ def calculate_pairwise_metrics(
     heatmaps: torch.Tensor,
     device: torch.device,
 ) -> dict[str, np.ndarray]:
-    """Calculate every unordered sample-pair value for the four metrics."""
+    """Calculate every unordered sample-pair value for the three metrics."""
     if heatmaps.ndim != 3:
         raise ValueError(
             f"Expected pooled heatmaps with shape [samples, height, width], "
@@ -142,10 +131,8 @@ def calculate_pairwise_metrics(
 
     maps_on_device = heatmaps.to(device=device, dtype=torch.float32)
     flattened = maps_on_device.flatten(start_dim=1)
-    blurred = _gaussian_blur_3x3(maps_on_device).flatten(start_dim=1)
     return {
         "cosine": _pairwise_cosine(flattened),
-        "gaussian_cosine": _pairwise_cosine(blurred),
         "relative_l1": _pairwise_relative_l1(flattened),
         "spearman": _pairwise_spearman(flattened, device),
     }
@@ -301,10 +288,6 @@ def _write_workbook(
         ),
         ("Pooling", "L2 norm over the three gradient color channels."),
         ("Cosine", "Pairwise cosine similarity of flattened pooled heatmaps."),
-        (
-            "Gaussian Cosine",
-            "Pairwise cosine after a 3x3 Gaussian blur with sigma 1 and reflection padding.",
-        ),
         (
             "Relative L1 Difference",
             "2 * absolute difference of L1 norms divided by their sum.",

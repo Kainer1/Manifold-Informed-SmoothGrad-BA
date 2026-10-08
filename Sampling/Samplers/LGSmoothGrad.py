@@ -1,4 +1,4 @@
-"""Original binary low-gradient mask and centered-circle sanity checks."""
+"""Signed-mean low-gradient mask and centered-circle sanity checks."""
 
 import math
 
@@ -54,9 +54,7 @@ class LGSmoothGradSampler(SmoothGradSampler):
             inputs.amax(dim=(1, 2, 3), keepdim=True)
             - inputs.amin(dim=(1, 2, 3), keepdim=True)
         )
-        average_magnitude = torch.zeros(
-            len(inputs), 1, height, width, device=inputs.device
-        )
+        average_gradient = torch.zeros_like(inputs)
         for step in range(1, N_TILDE + 1):
             # Retain the unperturbed first point from the original implementation.
             if step == 1:
@@ -73,8 +71,10 @@ class LGSmoothGradSampler(SmoothGradSampler):
                     )
                 )
             gradient = torch.cat(gradients, dim=0)
-            magnitude = torch.linalg.vector_norm(gradient, dim=1, keepdim=True)
-            average_magnitude = ((step - 1) * average_magnitude + magnitude) / step
+            average_gradient = ((step - 1) * average_gradient + gradient) / step
+        average_magnitude = torch.linalg.vector_norm(
+            average_gradient, dim=1, keepdim=True
+        )
         threshold = torch.quantile(
             average_magnitude.view(len(inputs), -1), self.q, dim=1
         ).view(-1, 1, 1, 1)

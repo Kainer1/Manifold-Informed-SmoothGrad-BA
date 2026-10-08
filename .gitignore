@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+.ruff_cache/
+
+# Keep the result folder structure, but omit generated experiment data.
+Results/**/*
+!Results/**/
+!Results/**/.gitkeep

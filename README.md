@@ -63,11 +63,13 @@ Both visualization index lists must be subsets of the main `indices` selection. 
 
 ## Additional statistics from saved samples
 
-Enable `saveAllSamples` during sampling to run the following scripts afterwards. They read `Samples/allSamples/`; the gradient analyses recompute gradients from these saved inputs, and output formats are listed below, with additional HDF5 details for the ReLU analyses.
+The sample-based scripts below read `Samples/allSamples/`, created by enabling `saveAllSamples` during sampling; gradient analyses recompute gradients from these saved inputs. `averagedHeatmapCoarse.py` reads saved averaged attributions instead and does not require saved samples or model inference.
 
 | Script in `PostProcessing/` | Analysis |
 | --- | --- |
-| `attributionSampleSimilarity.py` | Similarity between sample input-gradient heatmaps: Cosine, Gaussian Cosine, Spearman and relative L1-mass difference; also Complexity, Sparseness and Coarse |
+| `attributionSampleSimilarity.py` | Similarity between sample input-gradient heatmaps: Cosine, Spearman and relative L1-mass difference; also Complexity, Sparseness and Coarse |
+| `sampleToVanillaSimilarity.py` | Cosine and Spearman between each sample input-gradient heatmap and Vanilla Gradient of the matching original image |
+| `averagedHeatmapCoarse.py` | Coarse 8/16/32/64 of the saved averaged attribution heatmaps, as in Fig. C.1; scores per image and means across images |
 | `reluActiveAnalysis.py` | Counts and fractions of active ReLU units per layer and across the network |
 | `reluGradientAmounts.py` | Incoming and passed absolute-gradient amounts at ReLU layers, blocked fractions and input-gradient amounts |
 | `sampleFourierAnalysis.py` | Radial Fourier amplitude and power; means and quantiles for one sample or all samples of a sampler |
@@ -77,16 +79,22 @@ After running the example configuration, use these commands from `Code/`. For ot
 
 ```bash
 python PostProcessing/attributionSampleSimilarity.py --sampler_names example_SmoothGrad_n4_p0.09
+python PostProcessing/sampleToVanillaSimilarity.py --samplers example_SmoothGrad_n4_p0.09 example_ADM_n4_strength0.08 --reference-sampler example_VanillaGradient_n1
 python PostProcessing/reluActiveAnalysis.py
 python PostProcessing/reluGradientAmounts.py --samplers example_VanillaGradient_n1 example_ADM_n4_strength0.08 example_SmoothGrad_n4_p0.09
 python PostProcessing/sampleFourierAnalysis.py --sampler example_SmoothGrad_n4_p0.09
 python PostProcessing/sampleFourierAnalysis.py --sampler example_SmoothGrad_n4_p0.09 --index 0 --sample-index 0
 python PostProcessing/sampleSRG.py --samplers example_SmoothGrad_n4_p0.09 example_ADM_n4_strength0.08
+python PostProcessing/averagedHeatmapCoarse.py --samplers example_VanillaGradient_n1 example_SmoothGrad_n4_p0.09 example_ADM_n4_strength0.08
 ```
 
 The ReLU-gradient analysis uses every saved sample of each selected image; sample counts may differ between samplers and images. Fourier analysis defaults to quantiles 0.1 and 0.9; change them with `--quantiles`.
 
 Sample SRG uses all complete stored indices and all their samples; optionally select image indices with `--indices 0 1`. It uses `IMAGENET_H5_PATH` from `run.py` for the matching original images and writes `Samplername`, `Gruppenname`, `Index`, `SampleIndex`, `Label` and `SRG` to `Stats/SampleSRG/samples_<sampler>.csv`.
+
+The Vanilla comparison requires a saved VanillaGradient run with `n_samples=1` and `saveAllSamples=true` as its reference. It compares raw RGB-L2-pooled gradient maps without clipping or display normalization. It uses every complete image index and all samples; sample counts may vary. Selected samplers must cover the same complete indices, or use `--indices` to select an explicit set available in every sampler and the reference. Labels must match. Outputs in `Stats/SampleToVanillaSimilarity/` include per-sample, per-image and summary CSVs plus an Excel workbook. Summary means average finite sample coefficients, so images with more valid samples receive more weight. Zero-vector Cosine and constant-map Spearman are undefined; valid counts are exported.
+
+`averagedHeatmapCoarse.py` reads `Attributions/attributions_<sampler>.h5`, applies RGB-L2 pooling to the stored signed mean gradient, and computes Coarse before display normalization. It exports `per_image.csv`, `summary.csv` and `averaged_heatmap_coarse.xlsx` to `Stats/AveragedHeatmapCoarse/`. By default, selected samplers must cover identical image indices; use `--indices 0 1` to select an explicit subset. These scores measure the averaged heatmaps and differ from the mean of individual sample heatmap scores in `attributionSampleSimilarity.py`.
 
 ## Independent model evaluations
 
@@ -97,7 +105,7 @@ python PostProcessing/vgg16_crop_accuracy.py
 python PostProcessing/benchmark_model_runtimes.py --repeats 5 --output Results/VGG16/IMAGENET_256/Stats/model_runtime_benchmark.json
 ```
 
-`vgg16_crop_accuracy.py` preserves the original comparison: evaluate every dataset row at 256×256 and as a 224×224 center crop, without resizing, with ImageNet normalization and VGG16 `IMAGENET1K_V1`. It prints Top-1 and Top-5 accuracy for both resolutions. Defaults are batch size 50 and CUDA when available; use `--h5-path`, `--batch-size` or `--device` to override them. The default dataset path is `IMAGENET_H5_PATH` in `run.py`.
+`vgg16_crop_accuracy.py` preserves the original comparison: evaluate every dataset row at 256×256 and as a 224×224 center crop, without resizing, with ImageNet normalization and VGG16 `IMAGENET1K_V1`. Classifier inference uses CUDA autocast, matching the original SmoothGrad baseline accuracy calculation; CPU inference uses float32. It prints Top-1 and Top-5 accuracy for both resolutions. Defaults are batch size 50 and CUDA when available; use `--h5-path`, `--batch-size` or `--device` to override them. The default dataset path is `IMAGENET_H5_PATH` in `run.py`.
 
 `benchmark_model_runtimes.py` preserves the CUDA-synchronized timing protocol: one image (index 0), batch size one, one warm-up, median generation time, and no checkpoint loading inside the timed calls. The original CLI default is three repeats; the command above uses the five repeats reported in the thesis. `--models` selects from `smoothgrad`, `repae`, `sd_vae`, `dit`, `sd2`, `adm` and `deepfloyd`. The benchmark uses the current `Code/` samplers and their class conditioning without CFG; the original benchmark used stronger guidance for DiT, SD2 and DeepFloyd. Model configurations are recorded in the output.
 
